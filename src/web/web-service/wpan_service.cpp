@@ -70,12 +70,12 @@ std::string WpanService::HandleJoinNetworkRequest(const std::string &aJoinReques
     VerifyOrExit(client.Connect(), ret = kWpanStatus_SetFailed);
 
     VerifyOrExit(reader.parse(aJoinRequest.c_str(), root) == true, ret = kWpanStatus_ParseRequestFailed);
-    index        = root["index"].asUInt();
+    index          = root["index"].asUInt();
     credentialType = root["credentialType"].asString();
-    masterKey    = root["masterKey"].asString();
-    pskd         = root["pskd"].asString();
-    prefix       = root["prefix"].asString();
-    defaultRoute = root["defaultRoute"].asBool();
+    masterKey      = root["masterKey"].asString();
+    pskd           = root["pskd"].asString();
+    prefix         = root["prefix"].asString();
+    defaultRoute   = root["defaultRoute"].asBool();
 
     if (prefix.find('/') == std::string::npos)
     {
@@ -84,23 +84,26 @@ std::string WpanService::HandleJoinNetworkRequest(const std::string &aJoinReques
 
     VerifyOrExit(client.FactoryReset(), ret = kWpanStatus_LeaveFailed);
 
-    if (credentialType == CREDENTIAL_TYPE_MASTER_KEY) {
-        VerifyOrExit((ret = commitActiveDataset(client, masterKey, mNetworks[index].mNetworkName, mNetworks[index].mChannel,
-                                                mNetworks[index].mExtPanId, mNetworks[index].mPanId)) == kWpanStatus_Ok);
+    if (credentialType == CREDENTIAL_TYPE_MASTER_KEY)
+    {
+        VerifyOrExit(
+            (ret = commitActiveDataset(client, masterKey, mNetworks[index].mNetworkName, mNetworks[index].mChannel,
+                                       mNetworks[index].mExtPanId, mNetworks[index].mPanId)) == kWpanStatus_Ok);
         VerifyOrExit(client.Execute("ifconfig up") != nullptr, ret = kWpanStatus_JoinFailed);
-
-
-    } else if (credentialType == CREDENTIAL_TYPE_PSKD) {
+    }
+    else if (credentialType == CREDENTIAL_TYPE_PSKD)
+    {
         VerifyOrExit(client.Execute("ifconfig up") != nullptr, ret = kWpanStatus_JoinFailed);
         VerifyOrExit(client.Execute("joiner start %s", pskd.c_str()) != nullptr, ret = kWpanStatus_JoinFailed);
-
-    } else {
+    }
+    else
+    {
         ExitNow(ret = kWpanStatus_SetFailed);
     }
 
     VerifyOrExit(client.Execute("thread start") != nullptr, ret = kWpanStatus_JoinFailed);
     VerifyOrExit(client.Execute("prefix add %s paso%s", prefix.c_str(), (defaultRoute ? "r" : "")) != nullptr,
-                     ret = kWpanStatus_SetFailed);
+                 ret = kWpanStatus_SetFailed);
 
 exit:
 
